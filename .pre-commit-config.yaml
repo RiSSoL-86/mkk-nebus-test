@@ -1,0 +1,45 @@
+exclude: ^.*alembic/versions/
+default_stages: [ pre-commit ]
+repos:
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.19.1
+    hooks:
+      - id: gitlint
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-toml
+      - id: end-of-file-fixer
+        stages: [ pre-commit ]
+        files: ^src/
+      - id: trailing-whitespace
+        stages: [ pre-commit ]
+        files: ^src/
+      - id: check-merge-conflict
+        files: ^src/
+
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff
+        entry: uv run --locked ruff check
+        args: [ --fix ]
+        language: system
+        types: [ python ]
+        files: ^src/
+
+      - id: ruff-format
+        name: ruff-format
+        entry: uv run --locked ruff format
+        language: system
+        types: [ python ]
+        files: ^src/
+
+      - id: mypy
+        name: mypy
+        entry: uv run --locked mypy
+        language: system
+        types: [ python ]
+        pass_filenames: false
+        args: [ "src" ]
