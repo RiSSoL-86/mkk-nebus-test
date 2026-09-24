@@ -1,0 +1,86 @@
+name: mkk-nebus
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: etc/docker/Dockerfile.dev
+      network: host
+    network_mode: "host"
+    env_file:
+      - src/.env
+    volumes:
+      - ./src:/app/src
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "500m"
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  payment_processor:
+    build:
+      context: .
+      dockerfile: etc/docker/Dockerfile.dev
+      network: host
+    network_mode: "host"
+    env_file:
+      - src/.env
+    volumes:
+      - ./src:/app/src
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "500m"
+    restart: always
+    command: ["faststream", "run", "services.payment_processor.main:app"]
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    command: ["postgres", "-p", "${POSTGRES_PORT:?Set POSTGRES_PORT in src/.env}"]
+    restart: always
+    network_mode: "host"
+    env_file:
+      - src/.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -p $$POSTGRES_PORT -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "500m"
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    restart: always
+    network_mode: "host"
+    env_file:
+      - src/.env
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "500m"
+
+volumes:
+  postgres_data:
+  rabbitmq_data:

@@ -1,0 +1,13 @@
+FROM python:3.14-slim
+
+COPY --from=ghcr.io/astral-sh/uv:0.11.17 /uv /uvx /bin/
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH=/app/src
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --locked
+COPY src ./src
+CMD ["uvicorn", "main:app", "--reload", "--reload-dir", "/app/src"]
