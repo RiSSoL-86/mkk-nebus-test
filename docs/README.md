@@ -146,18 +146,21 @@ src/
       broker/                    # broker, producer and consumer abstractions
     brokers/
       rabbitmq/                  # RabbitMQ implementation
-        broker.py                # RabbitMQBroker: connection + .producer / .consumer
+        broker.py                # RabbitMQBroker: connection with retries + .producer / .consumer
         producer.py              # publish, retry, dead-letter
         consumer.py              # payments.new subscription
         topology.py              # exchanges and queues
     database/                    # engine and session factory
-    payments/                    # ORM model, entities, repository, errors
+    payments/                    # ORM model, entities, enums, event types, repository, errors
     outbox/                      # ORM model and repository of outbox events
   services/
     api/
+      urls.py                    # /api/v1 router
       common/                    # API key dependency
       payments/
+        urls.py                  # payments routes
         handlers.py              # HTTP handlers
+        schemas.py               # response schemas
         services/                # create / get use cases
     outbox_publisher/
       main.py                    # OutboxPublisher: background polling task
@@ -166,6 +169,7 @@ src/
       main.py                    # FastStream app entry point
       handlers.py                # payments.new handler
       schemas.py                 # broker event schemas
+      errors.py                  # webhook delivery error
       services/                  # processing, webhook sending, rerouting
   alembic/                       # migrations
 ```
@@ -193,7 +197,7 @@ variables with empty values.
 
 Credentials are URL-encoded automatically when the RabbitMQ URL is built.
 
-Optional processing settings (defaults shown):
+Optional processing and broker settings (defaults shown):
 
 | Variable                        | Default | Description                         |
 |---------------------------------|---------|-------------------------------------|
